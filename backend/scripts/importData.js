@@ -28,20 +28,29 @@ const getAgeGroup = (age) => {
   return 'Forties+';
 };
 
-// CSV 파일 읽기 (고객 데이터)
-const importCustomers = async (filename = 'customer_cleaned.csv') => {
+// CSV 파일 읽기 (통합 데이터)
+const importData = async (filename = 'customer_cleaned.csv') => {
   const csvFilePath = path.join(__dirname, '../../data', filename);
 
   // CSV 파일 존재 확인
   if (!fs.existsSync(csvFilePath)) {
     console.error(`오류: CSV 파일을 찾을 수 없습니다: ${csvFilePath}`);
     console.log(`data 폴더에 ${filename} 파일을 넣어주세요.`);
+
+    // 대체 파일 확인
+    const altPath = path.join(__dirname, '../../data/data.csv');
+    if (fs.existsSync(altPath)) {
+      console.log('data.csv 파일을 찾았습니다. 이 파일을 사용합니다.');
+      return importData('data.csv');
+    }
+
     return null;
   }
 
   console.log(`${filename} 파일을 읽는 중...`);
 
   const customers = [];
+  const retentions = [];
   let rowCount = 0;
 
   return new Promise((resolve, reject) => {
@@ -52,8 +61,10 @@ const importCustomers = async (filename = 'customer_cleaned.csv') => {
 
         // CSV 데이터를 Customer 모델 형식으로 변환
         const age = parseInt(row.age) || parseInt(row.Age) || 0;
+        const uid = parseInt(row.uid) || parseInt(row.UID);
+
         const customer = {
-          uid: parseInt(row.uid) || parseInt(row.UID),
+          uid: uid,
           region_city_group: row.region_city_group || row.Region_City_Group || '',
           region_city: row.region_city || row.Region_City || '',
           age_group: row.age_group || row.Age_Group || getAgeGroup(age),
@@ -65,6 +76,19 @@ const importCustomers = async (filename = 'customer_cleaned.csv') => {
 
         customers.push(customer);
 
+        // 리텐션 데이터가 있는 경우
+        if (row.retained_june !== undefined || row.Retained_June !== undefined) {
+          const retention = {
+            uid: uid,
+            retained_june: row.retained_june === 'true' || row.retained_june === '1' || row.Retained_June === 'true' || row.Retained_June === '1' || parseInt(row.retained_june) === 1,
+            retained_july: row.retained_july === 'true' || row.retained_july === '1' || row.Retained_July === 'true' || row.Retained_July === '1' || parseInt(row.retained_july) === 1,
+            retained_august: row.retained_august === 'true' || row.retained_august === '1' || row.Retained_August === 'true' || row.Retained_August === '1' || parseInt(row.retained_august) === 1,
+            retained_90: row.retained_90 === 'true' || row.retained_90 === '1' || row.Retained_90 === 'true' || row.Retained_90 === '1' || parseInt(row.retained_90) === 1
+          };
+
+          retentions.push(retention);
+        }
+
         // 진행 상황 표시 (매 1000개마다)
         if (rowCount % 1000 === 0) {
           console.log(`읽은 행 수: ${rowCount}`);
@@ -72,56 +96,10 @@ const importCustomers = async (filename = 'customer_cleaned.csv') => {
       })
       .on('end', async () => {
         console.log(`\n총 ${customers.length}개의 고객 데이터를 읽었습니다.`);
-        resolve(customers);
-      })
-      .on('error', (error) => {
-        console.error('CSV 파일 읽기 오류:', error);
-        reject(error);
-      });
-  });
-};
-
-// CSV 파일 읽기 (리텐션 데이터)
-const importRetentions = async (filename = 'retention_data.csv') => {
-  const csvFilePath = path.join(__dirname, '../../data', filename);
-
-  // CSV 파일 존재 확인
-  if (!fs.existsSync(csvFilePath)) {
-    console.warn(`경고: CSV 파일을 찾을 수 없습니다: ${csvFilePath}`);
-    console.log(`리텐션 데이터를 건너뜁니다.`);
-    return null;
-  }
-
-  console.log(`\n${filename} 파일을 읽는 중...`);
-
-  const retentions = [];
-  let rowCount = 0;
-
-  return new Promise((resolve, reject) => {
-    fs.createReadStream(csvFilePath)
-      .pipe(csv())
-      .on('data', (row) => {
-        rowCount++;
-
-        // CSV 데이터를 Retention 모델 형식으로 변환
-        const retention = {
-          uid: parseInt(row.uid) || parseInt(row.UID),
-          retained_june: row.retained_june === 'true' || row.retained_june === '1' || row.Retained_June === 'true' || row.Retained_June === '1',
-          retained_july: row.retained_july === 'true' || row.retained_july === '1' || row.Retained_July === 'true' || row.Retained_July === '1',
-          retained_august: row.retained_august === 'true' || row.retained_august === '1' || row.Retained_August === 'true' || row.Retained_August === '1',
-          retained_90: row.retained_90 === 'true' || row.retained_90 === '1' || row.Retained_90 === 'true' || row.Retained_90 === '1'
-        };
-
-        retentions.push(retention);
-
-        // 진행 상황 표시 (매 1000개마다)
-        if (rowCount % 1000 === 0) {
-          console.log(`읽은 행 수: ${rowCount}`);
+        if (retentions.length > 0) {
+          console.log(`총 ${retentions.length}개의 리텐션 데이터를 읽었습니다.`);
         }
-      })
-      .on('end', async () => {
-        console.log(`\n총 ${retentions.length}개의 리텐션 데이터를 읽었습니다.`);
-        resolve(retentions);
+        resolve({ customers, retentions });
       })
       .on('error', (error) => {
         console.error('CSV 파일 읽기 오류:', error);
@@ -321,21 +299,18 @@ const main = async () => {
     await connectDB();
 
     // CSV 파일 읽기
-    const customers = await importCustomers('customer_cleaned.csv');
-    if (!customers) {
-      // 대체 파일명 시도
-      const altCustomers = await importCustomers('clean_data.csv');
-      if (!altCustomers) {
-        throw new Error('고객 데이터 파일을 찾을 수 없습니다.');
-      }
-      await saveCustomersToDatabase(altCustomers);
-    } else {
-      await saveCustomersToDatabase(customers);
+    const data = await importData('customer_cleaned.csv');
+    if (!data) {
+      throw new Error('데이터 파일을 찾을 수 없습니다.');
     }
 
-    // 리텐션 데이터 읽기 및 저장
-    const retentions = await importRetentions('retention_data.csv');
-    if (retentions) {
+    const { customers, retentions } = data;
+
+    // 고객 데이터 저장
+    await saveCustomersToDatabase(customers);
+
+    // 리텐션 데이터 저장
+    if (retentions && retentions.length > 0) {
       await saveRetentionsToDatabase(retentions);
     }
 
