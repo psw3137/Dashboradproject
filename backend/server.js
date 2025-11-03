@@ -30,6 +30,7 @@ app.get('/', (req, res) => {
 // API 라우트
 app.use('/api/customers', require('./routes/customers'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/retention', require('./routes/retention'));
 
 // 404 에러 핸들링
 app.use((req, res) => {
