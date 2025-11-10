@@ -473,7 +473,7 @@ def main():
     print("\n")
     
     # 1. 데이터 로드
-    df = load_data('/mnt/project/data.csv')
+    df = load_data('data.csv')
     if df is None:
         return
     
