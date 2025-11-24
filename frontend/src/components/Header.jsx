@@ -20,8 +20,7 @@ const Header = () => {
     <header className="header">
       <div className="header-container">
         <div className="header-logo">
-          <h1>스크린 골프 대시보드</h1>
-          <p className="header-subtitle">웹프레임워크백엔드 2조</p>
+          <h1>매출 관리 프로그램</h1>
         </div>
 
         <nav className="header-nav">

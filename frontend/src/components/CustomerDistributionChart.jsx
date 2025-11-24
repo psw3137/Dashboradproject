@@ -14,6 +14,18 @@ import { Pie } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+// 광역시도 한글 매핑
+const REGION_GROUP_MAPPING = {
+  'Seoul': '서울특별시', 'Gyeonggi-do': '경기도', 'Incheon': '인천광역시',
+  'Busan': '부산광역시', 'Daegu': '대구광역시', 'Daejeon': '대전광역시',
+  'Gwangju': '광주광역시', 'Ulsan': '울산광역시', 'Sejong': '세종특별자치시',
+  'Gangwon-do': '강원도', 'Chungcheongbuk-do': '충청북도', 'Chungcheongnam-do': '충청남도',
+  'Jeollabuk-do': '전라북도', 'Jeollanam-do': '전라남도', 'Gyeongsangbuk-do': '경상북도',
+  'Gyeongsangnam-do': '경상남도', 'Jeju': '제주특별자치도'
+};
+
+const getRegionKorean = (region) => REGION_GROUP_MAPPING[region] || region;
+
 const CustomerDistributionChart = ({ data }) => {
   // 상위 8개 지역만 표시, 나머지는 "기타"로 묶음
   const topRegions = data.slice(0, 8);
@@ -43,7 +55,7 @@ const CustomerDistributionChart = ({ data }) => {
   ];
 
   const chartData = {
-    labels: displayData.map(item => item.region),
+    labels: displayData.map(item => getRegionKorean(item.region)),
     datasets: [
       {
         label: '고객 수',
@@ -67,7 +79,7 @@ const CustomerDistributionChart = ({ data }) => {
           label: function(context) {
             const item = displayData[context.dataIndex];
             return [
-              `${item.region}`,
+              `${getRegionKorean(item.region)}`,
               `고객 수: ${item.count.toLocaleString()}명`,
               `비율: ${item.percentage.toFixed(2)}%`
             ];

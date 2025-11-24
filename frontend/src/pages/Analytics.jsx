@@ -26,6 +26,25 @@ ChartJS.register(
   Legend
 );
 
+// 광역시도 한글 매핑
+const REGION_GROUP_MAPPING = {
+  'Seoul': '서울특별시', 'Gyeonggi-do': '경기도', 'Incheon': '인천광역시',
+  'Busan': '부산광역시', 'Daegu': '대구광역시', 'Daejeon': '대전광역시',
+  'Gwangju': '광주광역시', 'Ulsan': '울산광역시', 'Sejong': '세종특별자치시',
+  'Gangwon-do': '강원도', 'Chungcheongbuk-do': '충청북도', 'Chungcheongnam-do': '충청남도',
+  'Jeollabuk-do': '전라북도', 'Jeollanam-do': '전라남도', 'Gyeongsangbuk-do': '경상북도',
+  'Gyeongsangnam-do': '경상남도', 'Jeju': '제주특별자치도'
+};
+
+// 연령대 한글 매핑
+const AGE_GROUP_MAPPING = {
+  'Teens': '10대', 'Twenties': '20대', 'Thirties': '30대', 'Forties+': '40대 이상'
+};
+
+// 매핑 함수들
+const getRegionKorean = (region) => REGION_GROUP_MAPPING[region] || region;
+const getAgeGroupKorean = (ageGroup) => AGE_GROUP_MAPPING[ageGroup] || ageGroup;
+
 const Analytics = () => {
   const [revenueByAge, setRevenueByAge] = useState(null);
   const [heatmapData, setHeatmapData] = useState(null);
@@ -60,7 +79,7 @@ const Analytics = () => {
     if (!revenueByAge) return null;
 
     return {
-      labels: revenueByAge.map(item => item.ageGroup),
+      labels: revenueByAge.map(item => getAgeGroupKorean(item.ageGroup)),
       datasets: [
         {
           label: '매출 (원)',
@@ -141,7 +160,7 @@ const Analytics = () => {
               <tbody>
                 {revenueByAge.map((item) => (
                   <tr key={item.ageGroup}>
-                    <td>{item.ageGroup}</td>
+                    <td>{getAgeGroupKorean(item.ageGroup)}</td>
                     <td>{item.customers.toLocaleString()}명</td>
                     <td>{item.revenue.toLocaleString()}원</td>
                     <td>{item.avgRevenue.toLocaleString()}원</td>
@@ -172,8 +191,8 @@ const Analytics = () => {
               <tbody>
                 {heatmapData.slice(0, 20).map((item, index) => (
                   <tr key={index}>
-                    <td>{item.region}</td>
-                    <td>{item.ageGroup}</td>
+                    <td>{getRegionKorean(item.region)}</td>
+                    <td>{getAgeGroupKorean(item.ageGroup)}</td>
                     <td>{item.customers.toLocaleString()}명</td>
                     <td>{item.revenue.toLocaleString()}원</td>
                   </tr>
