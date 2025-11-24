@@ -204,7 +204,18 @@ customerSchema.statics.getStatsByAgeGroup = async function() {
         totalRevenue: { $sum: '$total_payment_may' },
         customerCount: { $sum: 1 },
         avgVisits: { $avg: '$visit_days' },
-        avgRevenue: { $avg: '$total_payment_may' }
+        avgRevenue: { $avg: '$total_payment_may' },
+        retainedCount: { $sum: '$retained_90' }
+      }
+    },
+    {
+      $addFields: {
+        retentionRate: {
+          $round: [
+            { $multiply: [{ $divide: ['$retainedCount', '$customerCount'] }, 100] },
+            2
+          ]
+        }
       }
     },
     { $sort: { totalRevenue: -1 } }

@@ -111,6 +111,7 @@ const CustomerList = () => {
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // 필터 상태
   const [filters, setFilters] = useState({
@@ -123,6 +124,9 @@ const CustomerList = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('revenue');
+
+  // 활성화된 필터 개수 계산
+  const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
 
   useEffect(() => {
     loadCustomers();
@@ -203,83 +207,150 @@ const CustomerList = () => {
     return 'Bronze';
   };
 
+  // 필터 칩 제거 함수
+  const removeFilter = (filterKey) => {
+    setFilters(prev => ({ ...prev, [filterKey]: '' }));
+  };
+
+  // 필터 라벨 가져오기
+  const getFilterLabel = (key, value) => {
+    switch (key) {
+      case 'region': return `지역: ${value}`;
+      case 'ageGroup': return `연령대: ${getAgeGroupKorean(value)}`;
+      case 'minPayment': return `최소매출: ${Number(value).toLocaleString()}원`;
+      case 'maxPayment': return `최대매출: ${Number(value).toLocaleString()}원`;
+      case 'retained90': return value === '1' ? '유지 고객' : '이탈 고객';
+      default: return value;
+    }
+  };
+
   return (
     <div className="customer-list">
-      <h2>고객 조회</h2>
+      <div className="page-header">
+        <h2>고객 조회</h2>
+        <p className="page-description">고객 목록을 조회하고 필터링할 수 있습니다</p>
+      </div>
 
-      {/* 필터링 패널 */}
+      {/* 필터링 패널 - 접힘/펼침 */}
       <div className="filter-panel">
-        <form onSubmit={handleFilterSubmit} className="filter-form">
-          <div className="filter-row">
-            <div className="filter-item">
-              <label>지역</label>
-              <input
-                type="text"
-                name="region"
-                value={filters.region}
-                onChange={handleFilterChange}
-                placeholder="예: 서울특별시"
-              />
-            </div>
-
-            <div className="filter-item">
-              <label>연령대</label>
-              <select
-                name="ageGroup"
-                value={filters.ageGroup}
-                onChange={handleFilterChange}
-              >
-                <option value="">전체</option>
-                <option value="Teens">10대</option>
-                <option value="Twenties">20대</option>
-                <option value="Thirties">30대</option>
-                <option value="Forties+">40대 이상</option>
-              </select>
-            </div>
-
-            <div className="filter-item">
-              <label>최소 매출</label>
-              <input
-                type="number"
-                name="minPayment"
-                value={filters.minPayment}
-                onChange={handleFilterChange}
-                placeholder="0"
-              />
-            </div>
-
-            <div className="filter-item">
-              <label>최대 매출</label>
-              <input
-                type="number"
-                name="maxPayment"
-                value={filters.maxPayment}
-                onChange={handleFilterChange}
-                placeholder="1000000"
-              />
-            </div>
-
-            <div className="filter-item">
-              <label>유지 여부</label>
-              <select
-                name="retained90"
-                value={filters.retained90}
-                onChange={handleFilterChange}
-              >
-                <option value="">전체</option>
-                <option value="1">유지</option>
-                <option value="0">이탈</option>
-              </select>
-            </div>
+        <div
+          className="filter-header"
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
+        >
+          <div className="filter-title">
+            <span className="filter-icon">🔍</span>
+            <span>필터 옵션</span>
+            {activeFilterCount > 0 && (
+              <span className="filter-count">{activeFilterCount}</span>
+            )}
           </div>
+          <button type="button" className="filter-toggle">
+            {isFilterOpen ? '접기 ▲' : '펼치기 ▼'}
+          </button>
+        </div>
 
-          <div className="filter-actions">
-            <button type="submit" className="btn btn-primary">필터 적용</button>
-            <button type="button" onClick={handleFilterReset} className="btn btn-secondary">
-              초기화
+        {/* 선택된 필터 칩 */}
+        {activeFilterCount > 0 && (
+          <div className="filter-chips">
+            {Object.entries(filters).map(([key, value]) =>
+              value && (
+                <span key={key} className="filter-chip">
+                  {getFilterLabel(key, value)}
+                  <button
+                    type="button"
+                    className="chip-remove"
+                    onClick={() => removeFilter(key)}
+                  >
+                    ×
+                  </button>
+                </span>
+              )
+            )}
+            <button
+              type="button"
+              className="clear-all-btn"
+              onClick={handleFilterReset}
+            >
+              전체 초기화
             </button>
           </div>
-        </form>
+        )}
+
+        {isFilterOpen && (
+          <form onSubmit={handleFilterSubmit} className="filter-form">
+            <div className="filter-row">
+              <div className="filter-item">
+                <label>📍 지역</label>
+                <input
+                  type="text"
+                  name="region"
+                  value={filters.region}
+                  onChange={handleFilterChange}
+                  placeholder="예: 서울특별시"
+                />
+              </div>
+
+              <div className="filter-item">
+                <label>👤 연령대</label>
+                <select
+                  name="ageGroup"
+                  value={filters.ageGroup}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">전체</option>
+                  <option value="Teens">10대</option>
+                  <option value="Twenties">20대</option>
+                  <option value="Thirties">30대</option>
+                  <option value="Forties+">40대 이상</option>
+                </select>
+              </div>
+
+              <div className="filter-item">
+                <label>💰 최소 매출</label>
+                <input
+                  type="number"
+                  name="minPayment"
+                  value={filters.minPayment}
+                  onChange={handleFilterChange}
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="filter-item">
+                <label>💰 최대 매출</label>
+                <input
+                  type="number"
+                  name="maxPayment"
+                  value={filters.maxPayment}
+                  onChange={handleFilterChange}
+                  placeholder="1000000"
+                />
+              </div>
+
+              <div className="filter-item">
+                <label>🔄 유지 여부</label>
+                <select
+                  name="retained90"
+                  value={filters.retained90}
+                  onChange={handleFilterChange}
+                >
+                  <option value="">전체</option>
+                  <option value="1">유지</option>
+                  <option value="0">이탈</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="filter-actions">
+              <button type="submit" className="btn btn-primary btn-large">
+                🔍 필터 적용
+              </button>
+              <button type="button" onClick={handleFilterReset} className="btn btn-secondary">
+                초기화
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* 정렬 및 통계 */}
@@ -287,15 +358,16 @@ const CustomerList = () => {
         <div className="sort-controls">
           <label>정렬:</label>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option value="revenue">매출순</option>
-            <option value="visits">방문순</option>
-            <option value="age">나이순</option>
+            <option value="revenue">💰 매출순</option>
+            <option value="visits">📅 방문순</option>
+            <option value="age">👤 나이순</option>
           </select>
         </div>
 
         {pagination && (
           <div className="list-stats">
-            총 {pagination.total.toLocaleString()}명의 고객
+            <span className="stats-icon">👥</span>
+            총 <strong>{pagination.total.toLocaleString()}</strong>명의 고객
           </div>
         )}
       </div>
@@ -313,10 +385,8 @@ const CustomerList = () => {
                 <tr>
                   <th>UID</th>
                   <th>지역</th>
-                  <th>도시</th>
-                  <th>연령대</th>
                   <th>나이</th>
-                  <th>방문 일수</th>
+                  <th>방문</th>
                   <th>총 매출</th>
                   <th>등급</th>
                   <th>유지</th>
@@ -326,13 +396,21 @@ const CustomerList = () => {
               <tbody>
                 {customers.map((customer) => (
                   <tr key={customer.uid}>
-                    <td>{customer.uid}</td>
-                    <td>{getRegionKorean(customer.region_city_group)}</td>
-                    <td>{getCityKorean(customer.region_city)}</td>
-                    <td>{getAgeGroupKorean(customer.age_group)}</td>
-                    <td>{getAgeKorean(customer.age)}</td>
-                    <td>{customer.visit_days}일</td>
-                    <td>{customer.total_payment_may.toLocaleString()}원</td>
+                    <td className="uid-cell">{customer.uid}</td>
+                    <td>
+                      <div className="location-cell">
+                        <span className="region-name">{getCityKorean(customer.region_city)}</span>
+                        <span className="region-sub">{getRegionKorean(customer.region_city_group)}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="age-cell">
+                        <span className="age-value">{customer.age}세</span>
+                        <span className="age-group">{getAgeGroupKorean(customer.age_group)}</span>
+                      </div>
+                    </td>
+                    <td className="visit-cell">{customer.visit_days}일</td>
+                    <td className="revenue-cell">{customer.total_payment_may.toLocaleString()}원</td>
                     <td>
                       <span className={`badge badge-${getGrade(customer.total_payment_may).toLowerCase()}`}>
                         {getGrade(customer.total_payment_may)}

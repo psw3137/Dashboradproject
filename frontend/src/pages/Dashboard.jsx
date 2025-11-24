@@ -18,10 +18,18 @@ const Dashboard = () => {
   const [customerDistribution, setCustomerDistribution] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [trendType, setTrendType] = useState('weekly'); // 'weekly' 또는 'daily'
 
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  // 매출 추이 타입 변경 시 데이터 다시 로드
+  useEffect(() => {
+    if (!loading) {
+      loadRevenueTrend(trendType);
+    }
+  }, [trendType]);
 
   const loadDashboardData = async () => {
     try {
@@ -30,7 +38,7 @@ const Dashboard = () => {
 
       const [kpi, trend, region, distribution] = await Promise.all([
         getKPI(),
-        getRevenueTrend(),
+        getRevenueTrend('weekly'),
         getRevenueByRegion(),
         getCustomerDistribution(),
       ]);
@@ -44,6 +52,15 @@ const Dashboard = () => {
       setError('데이터를 불러오는데 실패했습니다. 서버가 실행 중인지 확인해주세요.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRevenueTrend = async (type) => {
+    try {
+      const trend = await getRevenueTrend(type);
+      setRevenueTrend(trend.data);
+    } catch (err) {
+      console.error('매출 추이 로드 실패:', err);
     }
   };
 
@@ -76,32 +93,43 @@ const Dashboard = () => {
       {/* KPI 카드 섹션 */}
       {kpiData && (
         <div className="kpi-section">
+          {/* 주요 KPI - 큰 사이즈 */}
           <KPICard
             title="총 매출"
             value={`${(kpiData.totalRevenue / 100000000).toFixed(1)}억원`}
             subtitle={`${kpiData.totalRevenue.toLocaleString()}원`}
             icon="💰"
+            size="large"
+            color="primary"
           />
           <KPICard
             title="총 고객 수"
             value={`${kpiData.totalCustomers.toLocaleString()}명`}
+            subtitle="활성 고객"
             icon="👥"
+            size="large"
+            color="info"
           />
+          {/* 보조 KPI - 일반 사이즈 */}
           <KPICard
             title="평균 객단가"
             value={`${(kpiData.arpu / 10000).toFixed(1)}만원`}
             subtitle={`${kpiData.arpu.toLocaleString()}원`}
             icon="💳"
+            color="warning"
           />
           <KPICard
             title="평균 방문"
             value={`${kpiData.avgVisits}일`}
+            subtitle="월 평균"
             icon="📅"
           />
           <KPICard
             title="90일 유지율"
             value={`${kpiData.retentionRate}%`}
+            subtitle="고객 유지"
             icon="🔄"
+            color="success"
           />
         </div>
       )}
@@ -111,7 +139,23 @@ const Dashboard = () => {
         {/* 매출 추이 */}
         {revenueTrend && (
           <div className="chart-container">
-            <h3>매출 추이</h3>
+            <div className="chart-header">
+              <h3>매출 추이</h3>
+              <div className="trend-toggle">
+                <button
+                  className={trendType === 'weekly' ? 'active' : ''}
+                  onClick={() => setTrendType('weekly')}
+                >
+                  주차별
+                </button>
+                <button
+                  className={trendType === 'daily' ? 'active' : ''}
+                  onClick={() => setTrendType('daily')}
+                >
+                  일별
+                </button>
+              </div>
+            </div>
             <RevenueTrendChart data={revenueTrend} />
           </div>
         )}

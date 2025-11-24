@@ -99,7 +99,8 @@ router.get('/revenue-by-age', async (req, res) => {
       revenue: item.totalRevenue,
       customers: item.customerCount,
       avgVisits: Math.round(item.avgVisits * 100) / 100,
-      avgRevenue: Math.round(item.avgRevenue)
+      avgRevenue: Math.round(item.avgRevenue),
+      retentionRate: item.retentionRate
     }));
 
     res.json({
@@ -118,49 +119,80 @@ router.get('/revenue-by-age', async (req, res) => {
 
 /**
  * GET /api/statistics/revenue-trend
- * 매출 추이 (주차별)
+ * 매출 추이 (주차별 또는 일별)
+ * @query type - 'weekly' (기본값) 또는 'daily'
  */
 router.get('/revenue-trend', async (req, res) => {
   try {
-    // visit_days를 기준으로 주차별로 그룹화
-    const stats = await Customer.aggregate([
-      {
-        $addFields: {
-          week: {
-            $cond: [
-              { $lte: ['$visit_days', 7] }, 1,
-              { $cond: [
-                { $lte: ['$visit_days', 14] }, 2,
-                { $cond: [
-                  { $lte: ['$visit_days', 21] }, 3,
-                  4
-                ]}
-              ]}
-            ]
+    const { type = 'weekly' } = req.query;
+
+    if (type === 'daily') {
+      // 일별 매출 (방문일수 1~31일 기준)
+      const stats = await Customer.aggregate([
+        {
+          $group: {
+            _id: '$visit_days',
+            revenue: { $sum: '$total_payment_may' },
+            customers: { $sum: 1 }
           }
-        }
-      },
-      {
-        $group: {
-          _id: '$week',
-          revenue: { $sum: '$total_payment_may' },
-          customers: { $sum: 1 }
-        }
-      },
-      { $sort: { _id: 1 } }
-    ]);
+        },
+        { $sort: { _id: 1 } }
+      ]);
 
-    const labels = stats.map(item => `${item._id}주차`);
-    const data = stats.map(item => item.revenue);
+      const labels = stats.map(item => `${item._id}일`);
+      const data = stats.map(item => item.revenue);
 
-    res.json({
-      success: true,
-      data: {
-        labels,
-        data,
-        details: stats
-      }
-    });
+      res.json({
+        success: true,
+        data: {
+          type: 'daily',
+          labels,
+          data,
+          details: stats
+        }
+      });
+    } else {
+      // 주차별 매출 (기본)
+      const stats = await Customer.aggregate([
+        {
+          $addFields: {
+            week: {
+              $cond: [
+                { $lte: ['$visit_days', 7] }, 1,
+                { $cond: [
+                  { $lte: ['$visit_days', 14] }, 2,
+                  { $cond: [
+                    { $lte: ['$visit_days', 21] }, 3,
+                    4
+                  ]}
+                ]}
+              ]
+            }
+          }
+        },
+        {
+          $group: {
+            _id: '$week',
+            revenue: { $sum: '$total_payment_may' },
+            customers: { $sum: 1 }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]);
+
+      const labels = stats.map(item => `${item._id}주차`);
+      const data = stats.map(item => item.revenue);
+
+      res.json({
+        success: true,
+        data: {
+          type: 'weekly',
+          labels,
+          data,
+          details: stats
+        }
+      });
+    }
   } catch (error) {
     console.error('매출 추이 조회 에러:', error);
     res.status(500).json({
@@ -212,6 +244,7 @@ router.get('/customer-distribution', async (req, res) => {
 /**
  * GET /api/statistics/heatmap
  * 지역 x 연령대 교차 분석 (히트맵용)
+ * 매출 기준 내림차순 정렬
  */
 router.get('/heatmap', async (req, res) => {
   try {
@@ -226,7 +259,7 @@ router.get('/heatmap', async (req, res) => {
           customers: { $sum: 1 }
         }
       },
-      { $sort: { '_id.region': 1, '_id.ageGroup': 1 } }
+      { $sort: { revenue: -1 } }  // 매출 기준 내림차순 정렬
     ]);
 
     const formattedData = heatmapData.map(item => ({

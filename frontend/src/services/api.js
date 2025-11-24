@@ -63,9 +63,10 @@ export const getRevenueByAge = async () => {
 
 /**
  * 매출 추이
+ * @param {string} type - 'weekly' (주차별, 기본값) 또는 'daily' (일별)
  */
-export const getRevenueTrend = async () => {
-  return await api.get('/statistics/revenue-trend');
+export const getRevenueTrend = async (type = 'weekly') => {
+  return await api.get('/statistics/revenue-trend', { params: { type } });
 };
 
 /**

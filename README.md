@@ -421,7 +421,7 @@ python data_cleaning.py
 - 송재경 (2021243112) - Frontend Developer
 - 윤보석 (2023243089) - Backend Developer
 - 이태석 (2021243071) - Full-stack Developer
-  
+
 ---
 
 ## 라이선스

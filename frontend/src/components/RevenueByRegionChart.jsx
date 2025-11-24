@@ -36,19 +36,41 @@ const REGION_GROUP_MAPPING = {
 
 const getRegionKorean = (region) => REGION_GROUP_MAPPING[region] || region;
 
+// 지역명 축약 (긴 이름 줄임)
+const getShortRegionName = (region) => {
+  const name = getRegionKorean(region);
+  return name.replace('특별시', '').replace('광역시', '').replace('특별자치시', '').replace('특별자치도', '');
+};
+
 const RevenueByRegionChart = ({ data }) => {
-  // 상위 10개 지역만 표시
+  // 상위 10개 지역 표시
   const topRegions = data.slice(0, 10);
 
+  // 그라디언트 색상 배열 (진한 보라 → 연한 보라)
+  const barColors = [
+    'rgba(102, 126, 234, 0.9)',
+    'rgba(118, 75, 162, 0.85)',
+    'rgba(102, 126, 234, 0.8)',
+    'rgba(118, 75, 162, 0.75)',
+    'rgba(102, 126, 234, 0.7)',
+    'rgba(118, 75, 162, 0.65)',
+    'rgba(102, 126, 234, 0.6)',
+    'rgba(118, 75, 162, 0.55)',
+    'rgba(102, 126, 234, 0.5)',
+    'rgba(118, 75, 162, 0.45)',
+  ];
+
   const chartData = {
-    labels: topRegions.map(item => getRegionKorean(item.region)),
+    labels: topRegions.map(item => getShortRegionName(item.region)),
     datasets: [
       {
-        label: '매출 (원)',
+        label: '매출',
         data: topRegions.map(item => item.revenue),
-        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-        borderColor: 'rgba(54, 162, 235, 1)',
+        backgroundColor: barColors,
+        borderColor: barColors.map(c => c.replace(/[\d.]+\)$/, '1)')),
         borderWidth: 1,
+        borderRadius: 4,
+        barThickness: 20,
       },
     ],
   };
@@ -56,18 +78,27 @@ const RevenueByRegionChart = ({ data }) => {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    indexAxis: 'y', // 가로 막대 차트
+    indexAxis: 'y',
     plugins: {
       legend: {
         display: false,
       },
       tooltip: {
+        backgroundColor: 'rgba(26, 26, 46, 0.95)',
+        titleFont: { size: 14, weight: 'bold' },
+        bodyFont: { size: 13 },
+        padding: 12,
+        cornerRadius: 8,
         callbacks: {
+          title: function(context) {
+            return getRegionKorean(topRegions[context[0].dataIndex].region);
+          },
           label: function(context) {
             const revenue = context.parsed.x;
             const customers = topRegions[context.dataIndex].customers;
+            const billions = (revenue / 100000000).toFixed(2);
             return [
-              `매출: ${revenue.toLocaleString()}원`,
+              `매출: ${billions}억원`,
               `고객 수: ${customers.toLocaleString()}명`
             ];
           }
@@ -77,17 +108,31 @@ const RevenueByRegionChart = ({ data }) => {
     scales: {
       x: {
         beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.06)',
+        },
         ticks: {
+          font: { size: 12 },
+          color: '#666',
           callback: function(value) {
             return (value / 100000000).toFixed(1) + '억';
           }
         }
+      },
+      y: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: { size: 12, weight: '500' },
+          color: '#333',
+        },
       }
     }
   };
 
   return (
-    <div style={{ height: '400px' }}>
+    <div style={{ height: '320px' }}>
       <Bar data={chartData} options={options} />
     </div>
   );
