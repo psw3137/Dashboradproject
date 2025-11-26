@@ -6,105 +6,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getCustomers, filterCustomers } from '../services/api';
+import { getCityKorean, getRegionKorean, getAgeGroupKorean, getCustomerGrade } from '../utils/formatters';
 import '../styles/CustomerList.css';
-
-// 지역명 영문 → 한글 매핑
-const CITY_NAME_MAPPING = {
-  // 서울
-  'Seoul': '서울',
-  // 경기도
-  'Yongin': '용인',
-  'Seongnam': '성남',
-  'Ansan': '안산',
-  'Anyang': '안양',
-  'Suwon': '수원',
-  'Goyang': '고양',
-  'Siheung': '시흥',
-  'Uijeongbu': '의정부',
-  'Bucheon': '부천',
-  'Gimpo': '김포',
-  'Gunpo': '군포',
-  'Hanam': '하남',
-  'Pocheon': '포천',
-  'Pyeongtaek': '평택',
-  // 인천
-  'Incheon': '인천',
-  // 대구
-  'Daegu': '대구',
-  // 대전
-  'Daejeon': '대전',
-  // 부산
-  'Busan': '부산',
-  // 울산
-  'Ulsan': '울산',
-  // 광주
-  'Gwangju': '광주',
-  // 세종
-  'Sejong': '세종',
-  // 충청남도
-  'Cheonan': '천안',
-  'Asan': '아산',
-  'Nonsan': '논산',
-  // 충청북도
-  'Cheongju': '청주',
-  'Chungju': '충주',
-  // 전라북도
-  'Jeonju': '전주',
-  'Iksan': '익산',
-  'Gunsan': '군산',
-  // 경상북도
-  'Gyeongsan': '경산',
-  'Gumi': '구미',
-  'Andong': '안동',
-  // 경상남도
-  'Changwon': '창원',
-  'Gimhae': '김해',
-  'Yangsan': '양산',
-  // 강원도
-  'Donghae': '동해',
-  'Wonju': '원주',
-  'Sokcho': '속초',
-  'Taebaek': '태백',
-  'Chuncheon': '춘천',
-  'Gangwon': '강원',
-  // 제주
-  'Jeju': '제주'
-};
-
-// 광역시도 한글 매핑
-const REGION_GROUP_MAPPING = {
-  'Seoul': '서울특별시',
-  'Gyeonggi-do': '경기도',
-  'Incheon': '인천광역시',
-  'Busan': '부산광역시',
-  'Daegu': '대구광역시',
-  'Daejeon': '대전광역시',
-  'Gwangju': '광주광역시',
-  'Ulsan': '울산광역시',
-  'Sejong': '세종특별자치시',
-  'Gangwon-do': '강원도',
-  'Chungcheongbuk-do': '충청북도',
-  'Chungcheongnam-do': '충청남도',
-  'Jeollabuk-do': '전라북도',
-  'Jeollanam-do': '전라남도',
-  'Gyeongsangbuk-do': '경상북도',
-  'Gyeongsangnam-do': '경상남도',
-  'Jeju': '제주특별자치도'
-};
-
-// 연령대 한글 매핑
-const AGE_GROUP_MAPPING = {
-  'Teens': '10대',
-  'Twenties': '20대',
-  'Thirties': '30대',
-  'Forties+': '40대 이상'
-};
-
-// 매핑 함수들
-const getCityKorean = (city) => CITY_NAME_MAPPING[city] || city;
-const getRegionKorean = (region) => REGION_GROUP_MAPPING[region] || region;
-const getAgeGroupKorean = (ageGroup) => AGE_GROUP_MAPPING[ageGroup] || ageGroup;
-const getAgeKorean = (age) => `${age}세`;
 
 const CustomerList = () => {
   const [customers, setCustomers] = useState([]);
@@ -198,13 +101,6 @@ const CustomerList = () => {
     });
     setCurrentPage(1);
     loadCustomers();
-  };
-
-  const getGrade = (payment) => {
-    if (payment >= 200000) return 'VIP';
-    if (payment >= 100000) return 'Gold';
-    if (payment >= 50000) return 'Silver';
-    return 'Bronze';
   };
 
   // 필터 칩 제거 함수
@@ -412,8 +308,8 @@ const CustomerList = () => {
                     <td className="visit-cell">{customer.visit_days}일</td>
                     <td className="revenue-cell">{customer.total_payment_may.toLocaleString()}원</td>
                     <td>
-                      <span className={`badge badge-${getGrade(customer.total_payment_may).toLowerCase()}`}>
-                        {getGrade(customer.total_payment_may)}
+                      <span className={`badge badge-${getCustomerGrade(customer.total_payment_may).toLowerCase()}`}>
+                        {getCustomerGrade(customer.total_payment_may)}
                       </span>
                     </td>
                     <td>

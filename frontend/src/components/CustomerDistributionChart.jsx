@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { getRegionKorean, getShortRegionName } from '../utils/formatters';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -13,24 +14,6 @@ import {
 import { Pie } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-
-// 광역시도 한글 매핑
-const REGION_GROUP_MAPPING = {
-  'Seoul': '서울특별시', 'Gyeonggi-do': '경기도', 'Incheon': '인천광역시',
-  'Busan': '부산광역시', 'Daegu': '대구광역시', 'Daejeon': '대전광역시',
-  'Gwangju': '광주광역시', 'Ulsan': '울산광역시', 'Sejong': '세종특별자치시',
-  'Gangwon-do': '강원도', 'Chungcheongbuk-do': '충청북도', 'Chungcheongnam-do': '충청남도',
-  'Jeollabuk-do': '전라북도', 'Jeollanam-do': '전라남도', 'Gyeongsangbuk-do': '경상북도',
-  'Gyeongsangnam-do': '경상남도', 'Jeju': '제주특별자치도'
-};
-
-const getRegionKorean = (region) => REGION_GROUP_MAPPING[region] || region;
-
-// 지역명 축약
-const getShortRegionName = (region) => {
-  const name = REGION_GROUP_MAPPING[region] || region;
-  return name.replace('특별시', '').replace('광역시', '').replace('특별자치시', '').replace('특별자치도', '');
-};
 
 const CustomerDistributionChart = ({ data }) => {
   // 상위 8개 지역만 표시, 나머지는 "기타"로 묶음

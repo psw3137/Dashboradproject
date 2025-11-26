@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getRevenueByAge, getHeatmapData } from '../services/api';
+import { getRegionKorean, getAgeGroupKorean, formatRevenue } from '../utils/formatters';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -25,25 +26,6 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-
-// 광역시도 한글 매핑
-const REGION_GROUP_MAPPING = {
-  'Seoul': '서울특별시', 'Gyeonggi-do': '경기도', 'Incheon': '인천광역시',
-  'Busan': '부산광역시', 'Daegu': '대구광역시', 'Daejeon': '대전광역시',
-  'Gwangju': '광주광역시', 'Ulsan': '울산광역시', 'Sejong': '세종특별자치시',
-  'Gangwon-do': '강원도', 'Chungcheongbuk-do': '충청북도', 'Chungcheongnam-do': '충청남도',
-  'Jeollabuk-do': '전라북도', 'Jeollanam-do': '전라남도', 'Gyeongsangbuk-do': '경상북도',
-  'Gyeongsangnam-do': '경상남도', 'Jeju': '제주특별자치도'
-};
-
-// 연령대 한글 매핑
-const AGE_GROUP_MAPPING = {
-  'Teens': '10대', 'Twenties': '20대', 'Thirties': '30대', 'Forties+': '40대 이상'
-};
-
-// 매핑 함수들
-const getRegionKorean = (region) => REGION_GROUP_MAPPING[region] || region;
-const getAgeGroupKorean = (ageGroup) => AGE_GROUP_MAPPING[ageGroup] || ageGroup;
 
 const Analytics = () => {
   const [revenueByAge, setRevenueByAge] = useState(null);
@@ -167,17 +149,6 @@ const Analytics = () => {
     return { totalRevenue, totalCustomers, avgRetention, bestAge };
   };
 
-  // 매출 포맷팅 함수
-  const formatRevenue = (revenue) => {
-    if (revenue >= 100000000) {
-      return `${(revenue / 100000000).toFixed(2)}억원`;
-    } else if (revenue >= 10000) {
-      return `${(revenue / 10000).toFixed(0)}만원`;
-    } else {
-      return `${revenue.toLocaleString()}원`;
-    }
-  };
-
   if (loading) {
     return <div className="loading">로딩 중...</div>;
   }
@@ -222,7 +193,7 @@ const Analytics = () => {
           <div className="summary-card">
             <div className="summary-icon">🔄</div>
             <div className="summary-content">
-              <div className="summary-label">평균 유지율</div>
+              <div className="summary-label">연령대별 평균 유지율</div>
               <div className="summary-value">{summary.avgRetention}%</div>
             </div>
           </div>

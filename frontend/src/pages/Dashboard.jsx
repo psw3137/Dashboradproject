@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getKPI, getRevenueByRegion, getRevenueByAge, getCustomerDistribution } from '../services/api';
+import { getKPI, getRevenueByRegion, getCustomerDistribution } from '../services/api';
 import KPICard from '../components/KPICard';
 import RevenueByRegionChart from '../components/RevenueByRegionChart';
 import CustomerDistributionChart from '../components/CustomerDistributionChart';
@@ -104,9 +104,9 @@ const Dashboard = () => {
             icon="📅"
           />
           <KPICard
-            title="90일 유지율"
+            title="전체 유지율"
             value={`${kpiData.retentionRate}%`}
-            subtitle="고객 유지"
+            subtitle="90일 기준"
             icon="🔄"
             color="success"
           />
