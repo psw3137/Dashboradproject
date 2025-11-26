@@ -25,16 +25,11 @@
   margin-bottom: 24px;
 }
 
-/* 차트 그리드: 매출추이 전체너비, 나머지 2열 */
+/* 차트 그리드: 2열 그리드 */
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
-}
-
-/* 첫 번째 차트(매출 추이)는 전체 너비 */
-.charts-grid > .chart-container:first-child {
-  grid-column: span 2;
 }
 
 .chart-container {
@@ -48,47 +43,6 @@
   font-size: 15px;
   margin: 0;
   color: var(--text-color);
-}
-
-/* 차트 헤더: 제목과 토글 버튼 */
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--primary-color);
-}
-
-/* 주차별/일별 토글 버튼 */
-.trend-toggle {
-  display: flex;
-  gap: 4px;
-  background: #f0f0f0;
-  border-radius: 6px;
-  padding: 3px;
-}
-
-.trend-toggle button {
-  padding: 6px 14px;
-  border: none;
-  background: transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  color: #666;
-  transition: all 0.2s ease;
-}
-
-.trend-toggle button:hover {
-  color: #333;
-}
-
-.trend-toggle button.active {
-  background: var(--primary-color);
-  color: white;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
 }
 
 .retry-button {
@@ -114,10 +68,6 @@
 
   .charts-grid {
     grid-template-columns: 1fr;
-  }
-
-  .charts-grid > .chart-container:first-child {
-    grid-column: span 1;
   }
 }
 

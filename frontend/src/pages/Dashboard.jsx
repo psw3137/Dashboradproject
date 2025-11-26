@@ -4,47 +4,35 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { getKPI, getRevenueTrend, getRevenueByRegion, getRevenueByAge, getCustomerDistribution } from '../services/api';
+import { getKPI, getRevenueByRegion, getRevenueByAge, getCustomerDistribution } from '../services/api';
 import KPICard from '../components/KPICard';
-import RevenueTrendChart from '../components/RevenueTrendChart';
 import RevenueByRegionChart from '../components/RevenueByRegionChart';
 import CustomerDistributionChart from '../components/CustomerDistributionChart';
 import '../styles/Dashboard.css';
 
 const Dashboard = () => {
   const [kpiData, setKpiData] = useState(null);
-  const [revenueTrend, setRevenueTrend] = useState(null);
   const [revenueByRegion, setRevenueByRegion] = useState(null);
   const [customerDistribution, setCustomerDistribution] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [trendType, setTrendType] = useState('weekly'); // 'weekly' 또는 'daily'
 
   useEffect(() => {
     loadDashboardData();
   }, []);
-
-  // 매출 추이 타입 변경 시 데이터 다시 로드
-  useEffect(() => {
-    if (!loading) {
-      loadRevenueTrend(trendType);
-    }
-  }, [trendType]);
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [kpi, trend, region, distribution] = await Promise.all([
+      const [kpi, region, distribution] = await Promise.all([
         getKPI(),
-        getRevenueTrend('weekly'),
         getRevenueByRegion(),
         getCustomerDistribution(),
       ]);
 
       setKpiData(kpi.data);
-      setRevenueTrend(trend.data);
       setRevenueByRegion(region.data);
       setCustomerDistribution(distribution.data);
     } catch (err) {
@@ -52,15 +40,6 @@ const Dashboard = () => {
       setError('데이터를 불러오는데 실패했습니다. 서버가 실행 중인지 확인해주세요.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadRevenueTrend = async (type) => {
-    try {
-      const trend = await getRevenueTrend(type);
-      setRevenueTrend(trend.data);
-    } catch (err) {
-      console.error('매출 추이 로드 실패:', err);
     }
   };
 
@@ -136,30 +115,6 @@ const Dashboard = () => {
 
       {/* 차트 섹션 */}
       <div className="charts-grid">
-        {/* 매출 추이 */}
-        {revenueTrend && (
-          <div className="chart-container">
-            <div className="chart-header">
-              <h3>매출 추이</h3>
-              <div className="trend-toggle">
-                <button
-                  className={trendType === 'weekly' ? 'active' : ''}
-                  onClick={() => setTrendType('weekly')}
-                >
-                  주차별
-                </button>
-                <button
-                  className={trendType === 'daily' ? 'active' : ''}
-                  onClick={() => setTrendType('daily')}
-                >
-                  일별
-                </button>
-              </div>
-            </div>
-            <RevenueTrendChart data={revenueTrend} />
-          </div>
-        )}
-
         {/* 지역별 매출 */}
         {revenueByRegion && (
           <div className="chart-container">
