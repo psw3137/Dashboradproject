@@ -27,25 +27,45 @@ const CustomerList = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('revenue');
+  const [isFiltered, setIsFiltered] = useState(false); // 필터 적용 여부 추적
+  const [pageInput, setPageInput] = useState(''); // 페이지 입력 필드
 
   // 활성화된 필터 개수 계산
   const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
 
   useEffect(() => {
     loadCustomers();
-  }, [currentPage, sortBy]);
+  }, [currentPage, sortBy, isFiltered]);
 
   const loadCustomers = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await getCustomers({
-        page: currentPage,
-        limit: 50,
-        sort: sortBy,
-        order: 'desc'
-      });
+      let response;
+
+      // 필터가 적용된 경우 filterCustomers 사용
+      if (isFiltered && activeFilterCount > 0) {
+        const cleanFilters = Object.fromEntries(
+          Object.entries(filters).filter(([_, value]) => value !== '')
+        );
+
+        response = await filterCustomers({
+          ...cleanFilters,
+          page: currentPage,
+          limit: 50,
+          sort: sortBy,
+          order: 'desc'
+        });
+      } else {
+        // 필터가 없으면 기본 getCustomers 사용
+        response = await getCustomers({
+          page: currentPage,
+          limit: 50,
+          sort: sortBy,
+          order: 'desc'
+        });
+      }
 
       setCustomers(response.data);
       setPagination(response.pagination);
@@ -77,12 +97,15 @@ const CustomerList = () => {
       const response = await filterCustomers({
         ...cleanFilters,
         page: 1,
-        limit: 50
+        limit: 50,
+        sort: sortBy,
+        order: 'desc'
       });
 
       setCustomers(response.data);
       setPagination(response.pagination);
       setCurrentPage(1);
+      setIsFiltered(true); // 필터 적용 상태로 설정
     } catch (err) {
       console.error('필터링 실패:', err);
       setError('필터링에 실패했습니다.');
@@ -100,12 +123,63 @@ const CustomerList = () => {
       retained90: ''
     });
     setCurrentPage(1);
-    loadCustomers();
+    setIsFiltered(false); // 필터 해제 상태로 설정
+    // useEffect가 loadCustomers를 호출하므로 여기서는 호출하지 않음
   };
 
   // 필터 칩 제거 함수
-  const removeFilter = (filterKey) => {
-    setFilters(prev => ({ ...prev, [filterKey]: '' }));
+  const removeFilter = async (filterKey) => {
+    const newFilters = { ...filters, [filterKey]: '' };
+    setFilters(newFilters);
+
+    // 남은 필터가 있는지 확인
+    const hasRemainingFilters = Object.values(newFilters).some(v => v !== '');
+
+    if (hasRemainingFilters) {
+      // 남은 필터로 다시 조회
+      try {
+        setLoading(true);
+        setError(null);
+
+        const cleanFilters = Object.fromEntries(
+          Object.entries(newFilters).filter(([_, value]) => value !== '')
+        );
+
+        const response = await filterCustomers({
+          ...cleanFilters,
+          page: 1,
+          limit: 50,
+          sort: sortBy,
+          order: 'desc'
+        });
+
+        setCustomers(response.data);
+        setPagination(response.pagination);
+        setCurrentPage(1);
+      } catch (err) {
+        console.error('필터링 실패:', err);
+        setError('필터링에 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // 모든 필터가 제거되면 초기화
+      setIsFiltered(false);
+      setCurrentPage(1);
+    }
+  };
+
+  // 페이지 직접 이동 핸들러
+  const handlePageJump = (e) => {
+    e.preventDefault();
+    const pageNum = parseInt(pageInput);
+
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= pagination.totalPages) {
+      setCurrentPage(pageNum);
+      setPageInput(''); // 입력 필드 초기화
+    } else {
+      alert(`1부터 ${pagination.totalPages}까지의 페이지 번호를 입력하세요.`);
+    }
   };
 
   // 필터 라벨 가져오기
@@ -350,6 +424,22 @@ const CustomerList = () => {
               >
                 다음
               </button>
+
+              {/* 페이지 직접 이동 */}
+              <form onSubmit={handlePageJump} className="page-jump">
+                <input
+                  type="number"
+                  min="1"
+                  max={pagination.totalPages}
+                  value={pageInput}
+                  onChange={(e) => setPageInput(e.target.value)}
+                  placeholder="페이지"
+                  className="page-input"
+                />
+                <button type="submit" className="btn btn-primary btn-sm">
+                  이동
+                </button>
+              </form>
             </div>
           )}
         </>

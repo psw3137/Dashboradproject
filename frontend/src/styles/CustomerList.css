@@ -417,6 +417,42 @@
   font-size: 15px;
 }
 
+/* 페이지 직접 이동 */
+.page-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  padding-left: 16px;
+  border-left: 1px solid #e0e0e0;
+}
+
+.page-input {
+  width: 80px;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.page-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.page-input::placeholder {
+  color: #aaa;
+  font-size: 13px;
+}
+
+.btn-sm {
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+}
+
 /* 로딩 & 에러 */
 .loading {
   text-align: center;
@@ -476,5 +512,22 @@
 
   .pagination {
     padding: 16px;
+    flex-wrap: wrap;
+  }
+
+  .page-jump {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 12px;
+    margin-top: 12px;
+    justify-content: center;
+  }
+
+  .page-input {
+    flex: 1;
+    max-width: 120px;
   }
 }
